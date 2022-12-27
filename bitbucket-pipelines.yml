@@ -1,0 +1,71 @@
+image: node:16.13.1
+
+definitions:
+  caches:
+    nodeall: ./node_modules
+    yarn: /usr/local/share/.cache/yarn
+  steps:
+    - step: &Quality-Check
+        name: Code Quality Checks 🎀
+        script:
+          - "yarn install"
+          - "yarn run lint"
+    - step: &Unit-Tests
+        name: Unit Testing 🔫
+        script:
+          - "yarn install"
+          - "yarn run test"
+
+pipelines:
+  default:
+    - parallel:
+        - step: *Quality-Check
+        - step: *Unit-Tests
+  branches:
+    "{master,main}":
+      - step: *Quality-Check
+      - step: *Unit-Tests
+      - step:
+          name: Deploying development 🚀
+          caches:
+            - nodeall
+            - yarn
+          script:
+            - echo 'Connecting to remote server to update repo'
+            - node --version
+            - npm --version
+            - pipe: atlassian/ssh-run:0.4.1
+              variables:
+                SSH_USER: $USER
+                SERVER: $SERVER_ADRESS
+                COMMAND: "cd smiling-scripts && bash admin-deploy-dev.sh"
+    staging:
+      - step: *Quality-Check
+      - step: *Unit-Tests
+      - step:
+          name: Deploying staging 🎩
+          caches:
+            - nodeall
+            - yarn
+          script:
+            - echo 'Connecting to remote server to update repo'
+            - pipe: atlassian/ssh-run:0.4.1
+              variables:
+                SSH_USER: $USER
+                SERVER: $SERVER_ADRESS
+                COMMAND: "cd smiling-scripts && bash admin-deploy-staging.sh"
+    prod:
+      - step: *Quality-Check
+      - step: *Unit-Tests
+      - step:
+          name: Deploying Production 🐨
+          caches:
+            - nodeall
+            - yarn
+          script:
+            - echo 'Connecting to remote server to update repo'
+            - pipe: atlassian/ssh-run:0.4.1
+              variables:
+                SSH_USER: $USER
+                SERVER: $SERVER_ADRESS
+                COMMAND: "cd smiling-scripts && bash admin-deploy-prod.sh"

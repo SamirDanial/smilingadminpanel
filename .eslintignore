@@ -1,0 +1,15 @@
+# modules
+node_modules
+
+# testing
+coverage
+
+# build
+build
+
+# public
+public/*
+
+# misc
+src/react-app-env.d.ts
+src/reportWebVitals.ts
